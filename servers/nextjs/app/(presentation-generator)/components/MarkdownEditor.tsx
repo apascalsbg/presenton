@@ -1,9 +1,10 @@
 import { useEditor, EditorContent } from "@tiptap/react"
 import StarterKit from "@tiptap/starter-kit"
 import { Markdown } from "tiptap-markdown"
-
+import { useEffect } from "react"
 
 export default function MarkdownEditor({ content, onChange }: { content: string; onChange: (content: string) => void }) {
+
     const editor = useEditor({
         extensions: [StarterKit, Markdown],
         content: content,

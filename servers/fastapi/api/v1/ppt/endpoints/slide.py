@@ -1,4 +1,3 @@
-import importlib
 from typing import Annotated, Optional
 from fastapi import APIRouter, Body, Depends, HTTPException
 from sqlalchemy.ext.asyncio import AsyncSession
@@ -14,7 +13,6 @@ from utils.llm_calls.edit_slide_html import get_edited_slide_html
 from utils.llm_calls.select_slide_type_on_edit import get_slide_layout_from_prompt
 from utils.process_slides import process_old_and_new_slides_and_fetch_assets
 from utils.randomizers import get_random_uuid
-from utils.schema_utils import remove_fields_from_schema
 
 
 SLIDE_ROUTER = APIRouter(prefix="/slide", tags=["Slide"])
@@ -34,12 +32,12 @@ async def edit_slide(
         raise HTTPException(status_code=404, detail="Presentation not found")
 
     presentation_layout = presentation.get_layout()
+
     slide_layout = await get_slide_layout_from_prompt(
         prompt, presentation_layout, slide
     )
-
     edited_slide_content = await get_edited_slide_content(
-        prompt, slide, presentation.language, slide_layout
+        prompt, slide_layout, slide, presentation.language
     )
 
     image_generation_service = ImageGenerationService(get_images_directory())

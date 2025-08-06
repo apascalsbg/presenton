@@ -18,31 +18,15 @@ def set_ollama_url_env(value):
 
 
 def set_custom_llm_url_env(value):
-    os.environ["CUSTOM_LLM_URL"] = value
+    os.environ["CUSTOM_URL"] = value
 
 
 def set_openai_api_key_env(value):
     os.environ["OPENAI_API_KEY"] = value
 
 
-def set_openai_model_env(value):
-    os.environ["OPENAI_MODEL"] = value
-
-
 def set_google_api_key_env(value):
     os.environ["GOOGLE_API_KEY"] = value
-
-
-def set_google_model_env(value):
-    os.environ["GOOGLE_MODEL"] = value
-
-
-def set_anthropic_api_key_env(value):
-    os.environ["ANTHROPIC_API_KEY"] = value
-
-
-def set_anthropic_model_env(value):
-    os.environ["ANTHROPIC_MODEL"] = value
 
 
 def set_custom_llm_api_key_env(value):
@@ -60,22 +44,9 @@ def set_custom_model_env(value):
 def set_pexels_api_key_env(value):
     os.environ["PEXELS_API_KEY"] = value
 
-
 def set_image_provider_env(value):
     os.environ["IMAGE_PROVIDER"] = value
 
 
 def set_pixabay_api_key_env(value):
     os.environ["PIXABAY_API_KEY"] = value
-
-
-def set_tool_calls_env(value):
-    os.environ["TOOL_CALLS"] = value
-
-
-def set_disable_thinking_env(value):
-    os.environ["DISABLE_THINKING"] = value
-
-
-def set_extended_reasoning_env(value):
-    os.environ["EXTENDED_REASONING"] = value

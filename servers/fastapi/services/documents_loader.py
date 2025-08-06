@@ -1,8 +1,9 @@
 import mimetypes
 from fastapi import HTTPException
-import os, asyncio
+import os, pdfplumber, asyncio
 from typing import List, Tuple
-import pdfplumber
+from docx import Document
+from pptx import Presentation
 
 from constants.documents import (
     PDF_MIME_TYPES,
@@ -10,15 +11,12 @@ from constants.documents import (
     TEXT_MIME_TYPES,
     WORD_TYPES,
 )
-from services.docling_service import DoclingService
 
 
 class DocumentsLoader:
 
     def __init__(self, file_paths: List[str]):
         self._file_paths = file_paths
-
-        self.docling_service = DoclingService()
 
         self._documents: List[str] = []
         self._images: List[List[str]] = []
@@ -78,7 +76,9 @@ class DocumentsLoader:
         document: str = ""
 
         if load_text:
-            document = self.docling_service.parse_to_markdown(file_path)
+            with pdfplumber.open(file_path) as pdf:
+                for page in pdf.pages:
+                    document += await asyncio.to_thread(page.extract_text)
 
         if load_images:
             image_paths = await self.get_page_images_from_pdf_async(file_path, temp_dir)
@@ -90,10 +90,23 @@ class DocumentsLoader:
             return await asyncio.to_thread(file.read)
 
     def load_msword(self, file_path: str) -> str:
-        return self.docling_service.parse_to_markdown(file_path)
+        document = Document(file_path)
+        text = "\n".join([paragraph.text for paragraph in document.paragraphs])
+        return text
 
     def load_powerpoint(self, file_path: str) -> str:
-        return self.docling_service.parse_to_markdown(file_path)
+        presentation = Presentation(file_path)
+
+        extracted_text = ""
+        for index, slide in enumerate(presentation.slides):
+            extracted_text += f"# Slide {index + 1}\n"
+            for shape in slide.shapes:
+                if shape.has_text_frame:
+                    for paragraph in shape.text_frame.paragraphs:
+                        extracted_text += f"{paragraph.text}\n"
+                    extracted_text += "\n"
+            extracted_text += "\n\n"
+        return extracted_text
 
     def get_page_images_from_pdf(self, file_path: str, temp_dir: str):
         with pdfplumber.open(file_path) as pdf:

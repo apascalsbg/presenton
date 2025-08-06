@@ -1,7 +1,12 @@
+import asyncio
 from typing import Optional
-from models.llm_message import LLMMessage
-from services.llm_client import LLMClient
-from utils.llm_provider import get_model
+from google.genai.types import GenerateContentConfig
+from utils.llm_provider import (
+    get_google_llm_client,
+    get_large_model,
+    is_google_selected,
+    get_llm_client,
+)
 
 system_prompt = """
     You are an expert HTML slide editor. Your task is to modify slide HTML content based on user prompts while maintaining proper structure, styling, and functionality.
@@ -47,17 +52,35 @@ def get_user_prompt(prompt: str, html: str):
 
 
 async def get_edited_slide_html(prompt: str, html: str):
-    model = get_model()
+    model = get_large_model()
+    llm_response = None
+    if is_google_selected():
+        client = get_google_llm_client()
+        response = await asyncio.to_thread(
+            client.models.generate_content,
+            model=model,
+            contents=[get_user_prompt(prompt, html)],
+            config=GenerateContentConfig(
+                system_instruction=system_prompt,
+                response_mime_type="text/plain",
+            ),
+        )
+        llm_response = response.text
+    else:
+        client = get_llm_client()
+        response = await client.chat.completions.create(
+            model=model,
+            messages=[
+                {"role": "system", "content": system_prompt},
+                {"role": "user", "content": get_user_prompt(prompt, html)},
+            ],
+        )
+        llm_response = response.choices[0].message.content
 
-    client = LLMClient()
-    response = await client.generate(
-        model=model,
-        messages=[
-            LLMMessage(role="system", content=system_prompt),
-            LLMMessage(role="user", content=get_user_prompt(prompt, html)),
-        ],
-    )
-    return extract_html_from_response(response) or html
+    if not llm_response:
+        return html
+
+    return extract_html_from_response(llm_response) or html
 
 
 def extract_html_from_response(response_text: str) -> Optional[str]:

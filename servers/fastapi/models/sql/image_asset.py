@@ -2,7 +2,7 @@ from datetime import datetime
 from typing import Optional
 
 from sqlalchemy import JSON, Column, DateTime
-from sqlmodel import Field, SQLModel
+from sqlmodel import SQLModel, Field
 
 from utils.randomizers import get_random_uuid
 

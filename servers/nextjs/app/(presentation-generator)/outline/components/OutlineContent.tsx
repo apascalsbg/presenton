@@ -15,10 +15,11 @@ import {
 } from "@dnd-kit/sortable";
 import { OutlineItem } from "./OutlineItem";
 import { Button } from "@/components/ui/button";
+import { SlideOutline } from "@/store/slices/presentationGeneration";
 import { FileText } from "lucide-react";
 
 interface OutlineContentProps {
-    outlines: string[] | null;
+    outlines: SlideOutline[] | null;
     isLoading: boolean;
     isStreaming: boolean;
     onDragEnd: (event: any) => void;
@@ -32,7 +33,6 @@ const OutlineContent: React.FC<OutlineContentProps> = ({
     onDragEnd,
     onAddSlide
 }) => {
-   
     const sensors = useSensors(
         useSensor(PointerSensor),
         useSensor(KeyboardSensor, {
@@ -84,12 +84,12 @@ const OutlineContent: React.FC<OutlineContentProps> = ({
                         onDragEnd={onDragEnd}
                     >
                         <SortableContext
-                            items={outlines?.map((item, index) => ({ id: `slide-${index}` })) || []}
+                            items={outlines?.map((item, index) => ({ id: item.title || `slide-${index}` })) || []}
                             strategy={verticalListSortingStrategy}
                         >
                             {outlines?.map((item, index) => (
                                 <OutlineItem
-                                    key={`slide-${index}`}
+                                    key={item.title || `slide-${index}`}
                                     index={index + 1}
                                     slideOutline={item}
                                     isStreaming={isStreaming}

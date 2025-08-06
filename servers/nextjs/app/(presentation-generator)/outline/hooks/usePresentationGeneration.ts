@@ -2,7 +2,7 @@ import { useState, useCallback } from "react";
 import { useDispatch } from "react-redux";
 import { useRouter } from "next/navigation";
 import { toast } from "sonner";
-import { clearPresentationData } from "@/store/slices/presentationGeneration";
+import { clearPresentationData, SlideOutline } from "@/store/slices/presentationGeneration";
 import { PresentationGenerationApi } from "../../services/api/presentation-generation";
 import { LayoutGroup, LoadingState, TABS } from "../types/index";
 
@@ -15,7 +15,7 @@ const DEFAULT_LOADING_STATE: LoadingState = {
 
 export const usePresentationGeneration = (
   presentationId: string | null,
-  outlines: string[] | null,
+  outlines: SlideOutline[] | null,
   selectedLayoutGroup: LayoutGroup | null,
   setActiveTab: (tab: string) => void
 ) => {
@@ -84,7 +84,7 @@ export const usePresentationGeneration = (
 
       if (response) {
         dispatch(clearPresentationData());
-          router.replace(`/presentation?id=${presentationId}&stream=true`);
+          router.push(`/presentation?id=${presentationId}&stream=true`);
       }
     } catch (error: any) {
       console.error('Error In Presentation Generation(prepare).', error);

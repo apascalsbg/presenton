@@ -7,10 +7,7 @@ from sqlalchemy.ext.asyncio import AsyncSession
 from models.presentation_outline_model import PresentationOutlineModel
 from models.sql.presentation import PresentationModel
 from models.sse_response import SSECompleteResponse, SSEResponse, SSEStatusResponse
-from services import TEMP_FILE_SERVICE
 from services.database import get_async_session
-from services.documents_loader import DocumentsLoader
-from services.score_based_chunker import ScoreBasedChunker
 from utils.llm_calls.generate_presentation_outlines import generate_ppt_outline
 
 OUTLINES_ROUTER = APIRouter(prefix="/outlines", tags=["Outlines"])
@@ -25,74 +22,39 @@ async def stream_outlines(
     if not presentation:
         raise HTTPException(status_code=404, detail="Presentation not found")
 
-    temp_dir = TEMP_FILE_SERVICE.create_temp_dir()
-
     async def inner():
         yield SSEStatusResponse(
             status="Generating presentation outlines..."
         ).to_string()
 
-        presentation_outlines = None
-        additional_context = ""
-        if presentation.file_paths:
-            documents_loader = DocumentsLoader(file_paths=presentation.file_paths)
-            await documents_loader.load_documents(temp_dir)
-            documents = documents_loader.documents
-            if documents:
-                additional_context = documents[0]
-                chunker = ScoreBasedChunker()
-                try:
-                    chunks = await chunker.get_n_chunks(
-                        documents[0], presentation.n_slides
-                    )
-                    presentation_outlines = PresentationOutlineModel(
-                        slides=[chunk.to_slide_outline() for chunk in chunks]
-                    )
-                except Exception as e:
-                    print(e)
+        presentation_content_text = ""
+        async for chunk in generate_ppt_outline(
+            presentation.prompt,
+            presentation.n_slides,
+            presentation.language,
+            presentation.summary,
+        ):
+            # Give control to the event loop
+            await asyncio.sleep(0)
 
-        if not presentation_outlines:
-            presentation_outlines_text = ""
-            async for chunk in generate_ppt_outline(
-                presentation.prompt,
-                presentation.n_slides,
-                presentation.language,
-                additional_context,
-            ):
-                # Give control to the event loop
-                await asyncio.sleep(0)
+            yield SSEResponse(
+                event="response",
+                data=json.dumps({"type": "chunk", "chunk": chunk}),
+            ).to_string()
+            presentation_content_text += chunk
 
-                yield SSEResponse(
-                    event="response",
-                    data=json.dumps({"type": "chunk", "chunk": chunk}),
-                ).to_string()
-                presentation_outlines_text += chunk
+        presentation_content_json = json.loads(presentation_content_text)
 
-            try:
-                presentation_outlines_json = json.loads(presentation_outlines_text)
-            except Exception as e:
-                print(e)
-                raise HTTPException(
-                    status_code=400,
-                    detail="Failed to generate presentation outlines. Please try again.",
-                )
-
-            presentation_outlines = PresentationOutlineModel(
-                **presentation_outlines_json
-            )
-
-        presentation_outlines.slides = presentation_outlines.slides[
+        presentation_content = PresentationOutlineModel(**presentation_content_json)
+        presentation_content.slides = presentation_content.slides[
             : presentation.n_slides
         ]
 
-        presentation.outlines = presentation_outlines.model_dump()
-        presentation.title = (
-            presentation_outlines.slides[0][:50]
-            .replace("#", "")
-            .replace("/", "")
-            .replace("\\", "")
-            .replace("\n", "")
-        )
+        presentation.title = presentation_content.title
+        presentation.outlines = [
+            each.model_dump() for each in presentation_content.slides
+        ]
+        presentation.notes = presentation_content.notes
 
         sql_session.add(presentation)
         await sql_session.commit()

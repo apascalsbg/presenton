@@ -26,8 +26,8 @@ export async function GET(request: Request) {
       waitUntil: "networkidle0",
       timeout: 80000,
     });
-    
-    await page.waitForSelector("[data-layouts]", { timeout: 30000 });
+
+    await page.waitForSelector("[data-layouts]", { timeout: 10000 });
 
     // Extract both data-layouts and data-group-settings attributes
     const { dataLayouts, dataGroupSettings } = await page.$eval(

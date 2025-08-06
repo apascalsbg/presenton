@@ -1,11 +1,9 @@
-from datetime import datetime
+import json
+
 from fastapi import HTTPException
-from sqlalchemy import select
-from sqlalchemy.ext.asyncio import AsyncSession
 
 from models.ollama_model_status import OllamaModelStatus
-from models.sql.ollama_pull_status import OllamaPullStatus
-from services.database import get_container_db_async_session
+from services import REDIS_SERVICE
 from utils.ollama import pull_ollama_model
 
 
@@ -16,8 +14,6 @@ async def pull_ollama_model_background_task(model: str):
         done=False,
     )
     log_event_count = 0
-
-    session = await get_container_db_async_session().__anext__()
 
     try:
         async for event in pull_ollama_model(model):
@@ -34,13 +30,18 @@ async def pull_ollama_model_background_task(model: str):
             if "status" in event:
                 saved_model_status.status = event["status"]
 
-                await upsert_ollama_pull_status(session, model, saved_model_status)
+            REDIS_SERVICE.set(
+                f"ollama_models/{model}",
+                json.dumps(saved_model_status.model_dump(mode="json")),
+            )
 
     except Exception as e:
         saved_model_status.status = "error"
         saved_model_status.done = True
-        await upsert_ollama_pull_status(session, model, saved_model_status)
-        await session.close()
+        REDIS_SERVICE.set(
+            f"ollama_models/{model}",
+            json.dumps(saved_model_status.model_dump(mode="json")),
+        )
         raise HTTPException(
             status_code=500,
             detail=f"Failed to pull model: {e}",
@@ -50,27 +51,9 @@ async def pull_ollama_model_background_task(model: str):
     saved_model_status.status = "pulled"
     saved_model_status.downloaded = saved_model_status.size
 
-    await upsert_ollama_pull_status(session, model, saved_model_status)
-    await session.close()
+    REDIS_SERVICE.set(
+        f"ollama_models/{model}",
+        json.dumps(saved_model_status.model_dump(mode="json")),
+    )
 
-
-async def upsert_ollama_pull_status(
-    session: AsyncSession, model: str, model_status: OllamaModelStatus
-):
-    stmt = select(OllamaPullStatus).where(OllamaPullStatus.id == model)
-    result = await session.execute(stmt)
-    existing_record = result.scalar_one_or_none()
-
-    if existing_record:
-        existing_record.status = model_status.model_dump(mode="json")
-        existing_record.last_updated = datetime.now()
-    else:
-        new_record = OllamaPullStatus(
-            id=model,
-            status=model_status.model_dump(mode="json"),
-            last_updated=datetime.now(),
-        )
-        session.add(new_record)
-
-    await session.commit()
-    await session.flush()
+    return saved_model_status

@@ -1,8 +1,6 @@
 from fastapi import APIRouter
 
-from api.v1.ppt.endpoints.anthropic import ANTHROPIC_ROUTER
-from api.v1.ppt.endpoints.google import GOOGLE_ROUTER
-from api.v1.ppt.endpoints.openai import OPENAI_ROUTER
+from api.v1.ppt.endpoints.custom_llm import CUSTOM_LLM_ROUTER
 from api.v1.ppt.endpoints.files import FILES_ROUTER
 from api.v1.ppt.endpoints.icons import ICONS_ROUTER
 from api.v1.ppt.endpoints.images import IMAGES_ROUTER
@@ -21,6 +19,4 @@ API_V1_PPT_ROUTER.include_router(SLIDE_ROUTER)
 API_V1_PPT_ROUTER.include_router(IMAGES_ROUTER)
 API_V1_PPT_ROUTER.include_router(ICONS_ROUTER)
 API_V1_PPT_ROUTER.include_router(OLLAMA_ROUTER)
-API_V1_PPT_ROUTER.include_router(OPENAI_ROUTER)
-API_V1_PPT_ROUTER.include_router(ANTHROPIC_ROUTER)
-API_V1_PPT_ROUTER.include_router(GOOGLE_ROUTER)
+API_V1_PPT_ROUTER.include_router(CUSTOM_LLM_ROUTER)

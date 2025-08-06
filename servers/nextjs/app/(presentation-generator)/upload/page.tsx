@@ -1,7 +1,7 @@
 import React from 'react'
 
 import UploadPage from './components/UploadPage'
-import Header from '@/app/(presentation-generator)/dashboard/components/Header'
+import Header from '@/app/dashboard/components/Header'
 import { Metadata } from 'next'
 
 export const metadata: Metadata = {

@@ -12,6 +12,7 @@ import { Textarea } from "@/components/ui/textarea";
 import {
   Wand2,
   Upload,
+  Globe,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { PresentationGenerationApi } from "../services/api/presentation-generation";
@@ -50,6 +51,12 @@ const ImageEditor = ({
   const [uploadError, setUploadError] = useState<string | null>(null);
   const [uploadedImageUrl, setUploadedImageUrl] = useState<string | null>(null);
   const [isOpen, setIsOpen] = useState(true);
+
+  // Web scraping state
+  const [scrapeUrl, setScrapeUrl] = useState<string>("");
+  const [isScrapingImages, setIsScrapingImages] = useState(false);
+  const [scrapeError, setScrapeError] = useState<string | null>(null);
+  const [scrapedImages, setScrapedImages] = useState<any[]>([]);
 
   // Focus point and object fit for image editing
   const [isFocusPointMode, setIsFocusPointMode] = useState(false);
@@ -205,6 +212,48 @@ const ImageEditor = ({
   };
 
   /**
+   * Handles web image scraping
+   */
+  const handleScrapeImages = async () => {
+    if (!scrapeUrl.trim()) {
+      setScrapeError("Please enter a URL");
+      return;
+    }
+
+    try {
+      setIsScrapingImages(true);
+      setScrapeError(null);
+      setScrapedImages([]);
+
+      // Call the plan-helper scrape API
+      const response = await fetch('/api/scrape-images', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({ url: scrapeUrl.trim() }),
+      });
+
+      const result = await response.json();
+
+      if (result.success) {
+        setScrapedImages(result.images.filter((img: any) => img.saved));
+        toast.success(`Successfully scraped ${result.savedImages} images!`);
+      } else {
+        setScrapeError(result.message);
+        toast.error(result.message);
+      }
+    } catch (err) {
+      const errorMsg = 'Failed to scrape images. Please try again.';
+      setScrapeError(errorMsg);
+      toast.error(errorMsg);
+      console.error("Scrape error:", err);
+    } finally {
+      setIsScrapingImages(false);
+    }
+  };
+
+  /**
    * Handles file upload
    */
   const handleFileUpload = async (
@@ -269,12 +318,15 @@ const ImageEditor = ({
 
           <div className="mt-6">
             <Tabs defaultValue="generate" className="w-full">
-              <TabsList className="grid bg-blue-100 border border-blue-300 w-full grid-cols-3 mx-auto">
+              <TabsList className="grid bg-blue-100 border border-blue-300 w-full grid-cols-4 mx-auto">
                 <TabsTrigger className="font-medium" value="generate">
                   AI Generate
                 </TabsTrigger>
                 <TabsTrigger className="font-medium" value="upload">
                   Upload
+                </TabsTrigger>
+                <TabsTrigger className="font-medium" value="web-images">
+                  Web Images
                 </TabsTrigger>
                 <TabsTrigger className="font-medium" value="edit">Edit</TabsTrigger>
               </TabsList>
@@ -434,6 +486,92 @@ const ImageEditor = ({
                   )}
                 </div>
               </TabsContent>
+
+              {/* Web Images Tab */}
+              <TabsContent value="web-images" className="mt-4 space-y-4">
+                <div className="space-y-4">
+                  <div>
+                    <h3 className="text-base font-medium mb-2">Scrape Images from Website</h3>
+                    <div className="flex gap-2">
+                      <input
+                        type="url"
+                        placeholder="https://example.com"
+                        value={scrapeUrl}
+                        onChange={(e) => setScrapeUrl(e.target.value)}
+                        className="flex-1 px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent outline-none"
+                        disabled={isScrapingImages}
+                      />
+                      <Button
+                        onClick={handleScrapeImages}
+                        disabled={!scrapeUrl.trim() || isScrapingImages}
+                        className="px-4"
+                      >
+                        <Globe className="w-4 h-4 mr-2" />
+                        {isScrapingImages ? "Scraping..." : "Get Images"}
+                      </Button>
+                    </div>
+                    <p className="text-xs text-gray-500 mt-1">
+                      Enter a website URL to scrape images (minimum 400px width)
+                    </p>
+                  </div>
+
+                  {scrapeError && (
+                    <div className="bg-red-50 border border-red-200 rounded-lg p-3">
+                      <p className="text-red-700 text-sm">{scrapeError}</p>
+                    </div>
+                  )}
+
+                  {isScrapingImages && (
+                    <div className="bg-blue-50 border border-blue-200 rounded-lg p-4">
+                      <div className="flex items-center">
+                        <div className="w-5 h-5 border-2 border-blue-600 border-t-transparent rounded-full animate-spin mr-3"></div>
+                        <div>
+                          <h3 className="text-sm font-medium text-blue-800">Scraping images...</h3>
+                          <p className="text-sm text-blue-600">This may take a moment while we find and process images.</p>
+                        </div>
+                      </div>
+                    </div>
+                  )}
+
+                  {scrapedImages.length > 0 && (
+                    <div>
+                      <h3 className="text-sm font-medium mb-3">
+                        Scraped Images ({scrapedImages.length})
+                      </h3>
+                      <div className="grid grid-cols-3 gap-3 max-h-96 overflow-y-auto">
+                        {scrapedImages.map((image, index) => (
+                          <div
+                            key={index}
+                            onClick={() => handleImageChange(image.url)}
+                            className="aspect-square bg-gray-100 rounded-lg border cursor-pointer hover:border-blue-500 transition-colors overflow-hidden group"
+                          >
+                            <img
+                              src={image.url}
+                              alt={`Scraped image ${index + 1}`}
+                              className="w-full h-full object-cover group-hover:scale-105 transition-transform"
+                              onError={(e) => {
+                                const target = e.target as HTMLImageElement;
+                                target.style.display = 'none';
+                                const parent = target.parentElement;
+                                if (parent) {
+                                  parent.innerHTML = '<div class="flex items-center justify-center h-full text-gray-400 text-xs">Image not available</div>';
+                                }
+                              }}
+                            />
+                            <div className="absolute inset-0 bg-black/0 group-hover:bg-black/20 transition-all duration-200" />
+                            <div className="absolute inset-0 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity">
+                              <span className="bg-white/90 px-2 py-1 rounded text-xs font-medium">
+                                Use Image
+                              </span>
+                            </div>
+                          </div>
+                        ))}
+                      </div>
+                    </div>
+                  )}
+                </div>
+              </TabsContent>
+
               <TabsContent value="edit" className="mt-4 space-y-4">
                 <div className="space-y-4">
                   <h3 className="text-sm font-medium mb-2">Current Image</h3>

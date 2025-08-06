@@ -1,12 +1,8 @@
 import { useEffect, useRef } from "react";
 import { useDispatch, useSelector } from "react-redux";
-import {
-  clearPresentationData,
-  setPresentationData,
-  setStreaming,
-} from "@/store/slices/presentationGeneration";
+import { clearPresentationData, setPresentationData, setStreaming } from "@/store/slices/presentationGeneration";
 import { jsonrepair } from "jsonrepair";
-import { toast } from "sonner";
+import { RootState } from "@/store/store";
 
 export const usePresentationStreaming = (
   presentationId: string,
@@ -15,6 +11,8 @@ export const usePresentationStreaming = (
   setError: (error: boolean) => void,
   fetchUserSlides: () => void
 ) => {
+  const { presentationData } = useSelector((state: RootState) => state.presentationGeneration);
+
   const dispatch = useDispatch();
   const previousSlidesLength = useRef(0);
 
@@ -66,7 +64,7 @@ export const usePresentationStreaming = (
               dispatch(setStreaming(false));
               setLoading(false);
               eventSource.close();
-
+              
               // Remove stream parameter from URL
               const newUrl = new URL(window.location.href);
               newUrl.searchParams.delete("stream");
@@ -83,23 +81,12 @@ export const usePresentationStreaming = (
             setLoading(false);
             dispatch(setStreaming(false));
             eventSource.close();
-
+            
             // Remove stream parameter from URL
             const newUrl = new URL(window.location.href);
             newUrl.searchParams.delete("stream");
             window.history.replaceState({}, "", newUrl.toString());
             break;
-          case "error":
-            eventSource.close();
-            toast.error("Error in outline streaming", {
-              description:
-                data.detail ||
-                "Failed to connect to the server. Please try again.",
-            });
-            setLoading(false);
-            dispatch(setStreaming(false));
-            setError(true);
-             break;
         }
       });
 
@@ -115,7 +102,9 @@ export const usePresentationStreaming = (
     if (stream) {
       initializeStream();
     } else {
-      fetchUserSlides();
+      if(!presentationData || presentationData.slides.length === 0){
+        fetchUserSlides();
+      }
     }
 
     return () => {
@@ -124,4 +113,4 @@ export const usePresentationStreaming = (
       }
     };
   }, [presentationId, stream, dispatch, setLoading, setError, fetchUserSlides]);
-};
+}; 

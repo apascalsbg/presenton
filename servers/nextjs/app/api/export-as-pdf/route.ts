@@ -8,6 +8,7 @@ import { NextResponse, NextRequest } from 'next/server';
 
 export async function POST(req: NextRequest) {
   const { id, title } = await req.json();
+  console.log('path', process.env.APP_DATA_DIRECTORY);
   if (!id) {
     return NextResponse.json({ error: "Missing Presentation ID" }, { status: 400 });
   }
@@ -68,7 +69,7 @@ export async function POST(req: NextRequest) {
 
   const sanitizedTitle = sanitizeFilename(title);
   const destinationPath = path.join(process.env.APP_DATA_DIRECTORY!, 'exports', `${sanitizedTitle}.pdf`);
-  await fs.promises.mkdir(path.dirname(destinationPath), { recursive: true });
+  console.log('destinationPath', destinationPath);
   await fs.promises.writeFile(destinationPath, pdfBuffer);
 
   return NextResponse.json({

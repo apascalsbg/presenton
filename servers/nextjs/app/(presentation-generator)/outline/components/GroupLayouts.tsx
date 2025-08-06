@@ -1,7 +1,7 @@
 import { CheckCircle } from 'lucide-react';
 import React from 'react';
 import { LayoutGroup } from "../types/index";
-import { useGroupLayoutLoader } from '@/app/(presentation-generator)/layout-preview/hooks/useGroupLayoutLoader';
+import { useGroupLayoutLoader } from '@/app/layout-preview/hooks/useGroupLayoutLoader';
 interface GroupLayoutsProps {
     group: LayoutGroup;
     onSelectLayoutGroup: (group: LayoutGroup) => void;

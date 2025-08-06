@@ -1,5 +1,5 @@
 {
     "description": "Default layout for presentations",
     "ordered": false,
-    "default": false
+    "default": true
 }

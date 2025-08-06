@@ -33,22 +33,17 @@
 
 ## ✨ More Freedom with AI Presentations
 
-Presenton gives you complete control over your AI presentation workflow. Choose your models, customize your experience, and keep your data private.
-
-* ✅ **Custom Layouts & Themes** — Create unlimited presentation designs with HTML and Tailwind CSS
-* ✅ **Flexible Generation** — Build presentations from prompts or uploaded documents
-* ✅ **Export Ready** — Save as PowerPoint (PPTX) and PDF with professional formatting
-* ✅ **Bring Your Own Key** — Use your own API keys for OpenAI, Google Gemini, Anthropic Claude, or any compatible provider. Only pay for what you use, no hidden fees or subscriptions.
-* ✅ **Ollama Integration** — Run open-source models locally with full privacy
-* ✅ **OpenAI API Compatible** — Connect to any OpenAI-compatible endpoint with your own models
-* ✅ **Multi-Provider Support** — Mix and match text and image generation providers
-* ✅ **Versatile Image Generation** — Choose from DALL-E 3, Gemini Flash, Pexels, or Pixabay
-* ✅ **Rich Media Support** — Icons, charts, and custom graphics for professional presentations
-* ✅ **Runs Locally** — All processing happens on your device, no cloud dependencies
-* ✅ **Privacy-First** — Zero tracking, no data stored by us, complete data sovereignty
-* ✅ **API Deployment** — Host as your own API service for your team
-* ✅ **Fully Open-Source** — Apache 2.0 licensed, inspect, modify, and contribute
-* ✅ **Docker Ready** — One-command deployment with GPU support for local models
+* ✅ **Custom layouts/templates/themes** — Create custom layouts with HTML and Tailwind, support any presentation design
+* ✅ **Bring Your Own Key** — Only pay for what you use. OpenAI, Gemini (More coming soon...)
+* ✅ **API Presentation Generation** — Host as API to generate presentations over requests
+* ✅ **Ollama Support** — Run open-source models locally with Ollama integration
+* ✅ **OpenAI API Compatibility** — Use any OpenAI-compatible API endpoint with your own models
+* ✅ **Versatile Image Generation** — Choose from DALL-E 3, Gemini Flash, Pexels, or Pixabay for your visuals
+* ✅ **Runs Locally** — All code runs on your device
+* ✅ **Privacy-First** — No tracking, no data stored by us
+* ✅ **Flexible** — Generate presentations from prompts or outlines
+* ✅ **Export Ready** — Save as PowerPoint (PPTX) and PDF
+* ✅ **Fully Open-Source** — Apache 2.0 licensed
 
 ## Deploy on Cloud (one click deployment)
 [![Deploy on Railway](https://railway.com/button.svg)](https://railway.com/deploy/presenton-ai-presentations?referralCode=ubp0kk)
@@ -77,20 +72,14 @@ Open http://localhost:5000 on browser of your choice to use Presenton.
 You may want to directly provide your API KEYS as environment variables and keep them hidden. You can set these environment variables to achieve it.
 
 - **CAN_CHANGE_KEYS=[true/false]**: Set this to **false** if you want to keep API Keys hidden and make them unmodifiable.
-- **LLM=[openai/google/anthropic/ollama/custom]**: Select **LLM** of your choice.
+- **LLM=[openai/google/ollama/custom]**: Select **LLM** of your choice.
 - **OPENAI_API_KEY=[Your OpenAI API Key]**: Provide this if **LLM** is set to **openai**
-- **OPENAI_MODEL=[OpenAI Model ID]**: Provide this if **LLM** is set to **openai** (default: "gpt-4.1")
 - **GOOGLE_API_KEY=[Your Google API Key]**: Provide this if **LLM** is set to **google**
-- **GOOGLE_MODEL=[Google Model ID]**: Provide this if **LLM** is set to **google** (default: "models/gemini-2.0-flash")
-- **ANTHROPIC_API_KEY=[Your Anthropic API Key]**: Provide this if **LLM** is set to **anthropic**
-- **ANTHROPIC_MODEL=[Anthropic Model ID]**: Provide this if **LLM** is set to **anthropic** (default: "claude-3-5-sonnet-20241022")
 - **OLLAMA_URL=[Custom Ollama URL]**: Provide this if you want to custom Ollama URL and **LLM** is set to **ollama**
 - **OLLAMA_MODEL=[Ollama Model ID]**: Provide this if **LLM** is set to **ollama**
 - **CUSTOM_LLM_URL=[Custom OpenAI Compatible URL]**: Provide this if **LLM** is set to **custom**
 - **CUSTOM_LLM_API_KEY=[Custom OpenAI Compatible API KEY]**: Provide this if **LLM** is set to **custom**
 - **CUSTOM_MODEL=[Custom Model ID]**: Provide this if **LLM** is set to **custom**
-- **TOOL_CALLS=[Enable/Disable Tool Calls on Custom LLM]**: If **true**, **LLM** will use Tool Call instead of Json Schema for Structured Output.
-- **DISABLE_THINKING=[Enable/Disable Thinking on Custom LLM]**: If **true**, Thinking will be disabled.
 
 You can also set the following environment variables to customize the image generation provider and API keys:
 
@@ -108,19 +97,9 @@ You can also set the following environment variables to customize the image gene
 docker run -it --name presenton -p 5000:80 -e LLM="openai" -e OPENAI_API_KEY="******" -e IMAGE_PROVIDER="dall-e-3" -e CAN_CHANGE_KEYS="false" -v "./app_data:/app_data" ghcr.io/presenton/presenton:latest
 ```
 
-### Using Google
-```bash
-docker run -it --name presenton -p 5000:80 -e LLM="google" -e GOOGLE_API_KEY="******" -e IMAGE_PROVIDER="gemini_flash" -e CAN_CHANGE_KEYS="false" -v "./app_data:/app_data" ghcr.io/presenton/presenton:latest
-```
-
 ### Using Ollama
 ```bash
 docker run -it --name presenton -p 5000:80 -e LLM="ollama" -e OLLAMA_MODEL="llama3.2:3b" -e IMAGE_PROVIDER="pexels" -e PEXELS_API_KEY="*******" -e CAN_CHANGE_KEYS="false" -v "./app_data:/app_data" ghcr.io/presenton/presenton:latest
-```
-
-### Using Anthropic
-```bash
-docker run -it --name presenton -p 5000:80 -e LLM="anthropic" -e ANTHROPIC_API_KEY="******" -e IMAGE_PROVIDER="pexels" -e PEXELS_API_KEY="******" -e CAN_CHANGE_KEYS="false" -v "./app_data:/app_data" ghcr.io/presenton/presenton:latest
 ```
 
 ### Using OpenAI Compatible API
@@ -203,79 +182,10 @@ For detailed info checkout [API documentation](https://docs.presenton.ai/using-p
 - [Create Presentations from CSV using AI](https://docs.presenton.ai/tutorial/generate-presentation-from-csv)
 - [Create Data Reports Using AI](https://docs.presenton.ai/tutorial/create-data-reports-using-ai)
 
-## 🏗️ MCP Architecture Overview
-
-![Demo](readme_assets/mcpdemo.gif)
-
-Presenton is built on a modular architecture featuring a FastAPI backend and a Next.js frontend. At its core is the **MCP (Model Context Protocol) server**, which orchestrates the entire presentation generation workflow using a robust state machine. This architecture ensures flexibility, reliability, and extensibility.
-
-### MCP Workflow Highlights
-
-- **Session Management:** Each presentation runs in its own session for isolation and tracking.
-- **Outline Generation:** Automatically creates outlines, with or without input files.
-- **Layout Selection:** Choose from built-in or custom layouts.
-- **Content & Asset Generation:** Generates slide text, images, and icons using your selected AI models.
-- **Export Options:** Seamlessly export presentations as PDF or PPTX files.
-
-All workflow logic and tool APIs are organized in the `app_mcp` package. The orchestrator handles state transitions and error management, making it easy to extend or customize.
-
-#### Key Files & Directories
-
-- `.vscode/mcp.json`: VS Code integration and MCP server configuration.
-- `servers/fastapi/app_mcp/`: Backend workflow logic and tool registration.
-
----
-
-## ⚡ Quick Start: VS Code Integration
-
-1. **Configure MCP:** Make sure `.vscode/mcp.json` points to your running MCP server (see example below).
-2. **Start a Presentation:** Use the VS Code command palette or chat to run `start_presentation` with your topic.
-3. **Advance Workflow:** Use `continue_workflow` to progress through outline, layout, and slide generation steps.
-4. **Export:** Use `export_presentation` to download your presentation as PDF or PPTX.
-5. **Check Progress:** Use `get_status` at any time to view your workflow status.
-
-#### Example `.vscode/mcp.json`
-```jsonc
-{
-  "servers": {
-    "my-mcp-server-5f58fb2c": {
-      "url": "http://localhost:5000/mcp/",
-      "type": "http"
-    }
-  },
-  "inputs": []
-}
-```
-
----
-
-### 🗣️ Using Chat Commands in VS Code
-
-You can interact with Presenton directly from the VS Code chat window:
-
-- **Step-by-step Workflow:**  
-  Type a prompt like:
-  ```plaintext
-  I want to create a presentation on "Artificial Intelligence in Healthcare". Can you please show me the step by step and verify things to me so that I can be sure that the presentation is good?
-  ```
-
-- **Direct Commands:**  
-  For a faster workflow, use direct commands such as:
-  ```plaintext
-  Start a presentation on "Artificial Intelligence in Healthcare" with general layout and 10 slides.
-  ```
-
-This integration gives you full control—whether you want a guided, step-by-step experience or prefer to automate the entire process with a single command.
-
----
-
-
-
-
 ## Roadmap
 - [x] Support for custom HTML templates by developers
 - [x] Support for accessing custom templates over API
-- [x] Implement MCP server
+- [ ] Implement MCP server
 - [ ] Ability for users to change system prompt
 - [X] Support external SQL database
 

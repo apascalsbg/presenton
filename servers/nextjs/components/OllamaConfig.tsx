@@ -1,5 +1,5 @@
 "use client";
-import { useState, useEffect } from "react";
+import { useState } from "react";
 import { Check, ChevronsUpDown, Loader2 } from "lucide-react";
 import { Button } from "./ui/button";
 import {
@@ -13,11 +13,11 @@ import {
 import { Popover, PopoverContent, PopoverTrigger } from "./ui/popover";
 import { cn } from "@/lib/utils";
 import { Switch } from "./ui/switch";
-import { toast } from "sonner";
 
 interface OllamaModel {
   label: string;
   value: string;
+  description: string;
   size: string;
   icon: string;
 }
@@ -26,84 +26,30 @@ interface OllamaConfigProps {
   ollamaModel: string;
   ollamaUrl: string;
   useCustomUrl: boolean;
-  onInputChange: (value: string | boolean, field: string) => void;
+  ollamaModels: OllamaModel[];
+  ollamaModelsLoading?: boolean;
+  onInputChange: (value: string, field: string) => void;
+  onUseCustomUrlChange: (checked: boolean) => void;
+  openModelSelect: boolean;
+  onOpenModelSelectChange: (open: boolean) => void;
+  onModelSelect?: (modelName: string) => void;
 }
 
 export default function OllamaConfig({
   ollamaModel,
   ollamaUrl,
   useCustomUrl,
+  ollamaModels,
+  ollamaModelsLoading = false,
   onInputChange,
+  onUseCustomUrlChange,
+  openModelSelect,
+  onOpenModelSelectChange,
+  onModelSelect,
 }: OllamaConfigProps) {
-  const [ollamaModels, setOllamaModels] = useState<OllamaModel[]>([]);
-  const [ollamaModelsLoading, setOllamaModelsLoading] = useState(false);
-  const [openModelSelect, setOpenModelSelect] = useState(false);
-
-  const fetchOllamaModels = async () => {
-    try {
-      setOllamaModelsLoading(true);
-      const response = await fetch('/api/v1/ppt/ollama/models/supported');
-
-      if (response.ok) {
-        const data = await response.json();
-        console.log(data);
-        setOllamaModels(data);
-      } else {
-        console.error('Failed to fetch Ollama models');
-        setOllamaModels([]);
-        toast.error('Failed to fetch Ollama models');
-      }
-    } catch (error) {
-      console.error('Error fetching Ollama models:', error);
-      toast.error('Error fetching Ollama models');
-      setOllamaModels([]);
-    } finally {
-      setOllamaModelsLoading(false);
-    }
-  };
-
-  useEffect(() => {
-    fetchOllamaModels();
-  }, []);
-
   return (
-    <div className="space-y-6">
-      {/* URL Configuration */}
-      <div>
-        <div className="flex items-center justify-between mb-4 bg-green-50 p-2 rounded-sm">
-          <label className="text-sm font-medium text-gray-700">
-            Use custom Ollama URL
-          </label>
-          <Switch
-            checked={useCustomUrl}
-            onCheckedChange={(checked) => onInputChange(checked, "use_custom_url")}
-          />
-        </div>
-        {useCustomUrl && (
-          <div className="mb-4">
-            <label className="block text-sm font-medium text-gray-700 mb-2">
-              Ollama URL
-            </label>
-            <div className="relative">
-              <input
-                type="text"
-                required
-                placeholder="Enter your Ollama URL"
-                className="w-full px-4 py-2.5 outline-none border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 transition-colors"
-                value={ollamaUrl}
-                onChange={(e) => onInputChange(e.target.value, "ollama_url")}
-              />
-            </div>
-            <p className="mt-2 text-sm text-gray-500 flex items-center gap-2">
-              <span className="block w-1 h-1 rounded-full bg-gray-400"></span>
-              Change this if you are using a custom Ollama instance
-            </p>
-          </div>
-        )}
-      </div>
-
-      {/* Model Selection */}
-      <div className="mb-4">
+    <>
+      <div className="mb-8">
         <label className="block text-sm font-medium text-gray-700 mb-3">
           Choose a supported model
         </label>
@@ -118,7 +64,7 @@ export default function OllamaConfig({
           ) : ollamaModels && ollamaModels.length > 0 ? (
             <Popover
               open={openModelSelect}
-              onOpenChange={setOpenModelSelect}
+              onOpenChange={onOpenModelSelectChange}
             >
               <PopoverTrigger asChild>
                 <Button
@@ -176,8 +122,12 @@ export default function OllamaConfig({
                           key={index}
                           value={model.value}
                           onSelect={(value) => {
-                            onInputChange(value, "ollama_model");
-                            setOpenModelSelect(false);
+                            if (onModelSelect) {
+                              onModelSelect(value);
+                            } else {
+                              onInputChange(value, "ollama_model");
+                            }
+                            onOpenModelSelectChange(false);
                           }}
                         >
                           <Check
@@ -205,6 +155,9 @@ export default function OllamaConfig({
                                   {model.size}
                                 </span>
                               </div>
+                              <span className="text-xs text-gray-600 leading-relaxed">
+                                {model.description}
+                              </span>
                             </div>
                           </div>
                         </CommandItem>
@@ -232,6 +185,42 @@ export default function OllamaConfig({
           </p>
         )}
       </div>
-    </div>
+      <div className="mb-8">
+        <div className="flex items-center justify-between mb-4 bg-green-50 p-2 rounded-sm">
+          <label className="text-sm font-medium text-gray-700">
+            Use custom Ollama URL
+          </label>
+          <Switch
+            checked={useCustomUrl}
+            onCheckedChange={onUseCustomUrlChange}
+          />
+        </div>
+        {useCustomUrl && (
+          <>
+            <div className="mb-4">
+              <label className="block text-sm font-medium text-gray-700 mb-2">
+                Ollama URL
+              </label>
+              <div className="relative">
+                <input
+                  type="text"
+                  required
+                  placeholder="Enter your Ollama URL"
+                  className="w-full px-4 py-2.5 outline-none border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 transition-colors"
+                  value={ollamaUrl}
+                  onChange={(e) =>
+                    onInputChange(e.target.value, "ollama_url")
+                  }
+                />
+              </div>
+              <p className="mt-2 text-sm text-gray-500 flex items-center gap-2">
+                <span className="block w-1 h-1 rounded-full bg-gray-400"></span>
+                Change this if you are using a custom Ollama instance
+              </p>
+            </div>
+          </>
+        )}
+      </div>
+    </>
   );
 } 

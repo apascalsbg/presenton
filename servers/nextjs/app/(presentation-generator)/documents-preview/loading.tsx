@@ -1,4 +1,4 @@
-import Header from '@/app/(presentation-generator)/dashboard/components/Header'
+import Header from '@/app/dashboard/components/Header'
 import { Skeleton } from '@/components/ui/skeleton'
 import React from 'react'
 

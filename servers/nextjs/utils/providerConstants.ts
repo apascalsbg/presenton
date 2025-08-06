@@ -67,17 +67,16 @@ export const LLM_PROVIDERS: Record<string, LLMProviderOption> = {
   openai: {
     value: "openai",
     label: "OpenAI",
-    description: "OpenAI's latest text generation model",
+    description: "OpenAI's latest image generation model",
+    model_value: "gpt-4.1",
+    model_label: "GPT-4.1"
   },
   google: {
     value: "google",
     label: "Google",
-    description: "Google's primary text generation model",
-  },
-  anthropic: {
-    value: "anthropic",
-    label: "Anthropic",
-    description: "Anthropic's Claude models",
+    description: "Google's primary image generation model",
+    model_value: "gemini-2.0-flash",
+    model_label: "Gemini 2.0 Flash"
   },
   ollama: {
     value: "ollama",

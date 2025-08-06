@@ -1,9 +1,9 @@
 import { useCallback } from "react";
 import { useDispatch } from "react-redux";
 import { arrayMove } from "@dnd-kit/sortable";
-import { setOutlines } from "@/store/slices/presentationGeneration";
+import { setOutlines, SlideOutline } from "@/store/slices/presentationGeneration";
 
-export const useOutlineManagement = (outlines: string[] | null) => {
+export const useOutlineManagement = (outlines: SlideOutline[] | null) => {
   const dispatch = useDispatch();
 
   const handleDragEnd = useCallback((event: any) => {
@@ -12,8 +12,8 @@ export const useOutlineManagement = (outlines: string[] | null) => {
     if (!active || !over || !outlines) return;
 
     if (active.id !== over.id) {
-      const oldIndex = outlines.findIndex((item) => item === active.id);
-      const newIndex = outlines.findIndex((item) => item === over.id);
+      const oldIndex = outlines.findIndex((item) => item.title === active.id);
+      const newIndex = outlines.findIndex((item) => item.title === over.id);
       const reorderedArray = arrayMove(outlines, oldIndex, newIndex);
       dispatch(setOutlines(reorderedArray));
     }
@@ -22,7 +22,12 @@ export const useOutlineManagement = (outlines: string[] | null) => {
   const handleAddSlide = useCallback(() => {
     if (!outlines) return;
 
-    const updatedOutlines = [...outlines, "Outline title"];
+    const newSlide: SlideOutline = {
+      title: "Outline title",
+      body: "Outline body",
+    };
+
+    const updatedOutlines = [...outlines, newSlide];
     dispatch(setOutlines(updatedOutlines));
   }, [outlines, dispatch]);
 

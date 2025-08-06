@@ -1,5 +1,4 @@
 from typing import List, Optional
-from fastapi import HTTPException
 from pydantic import BaseModel, Field
 
 from models.presentation_structure_model import PresentationStructureModel
@@ -13,17 +12,9 @@ class SlideLayoutModel(BaseModel):
 
 
 class PresentationLayoutModel(BaseModel):
-    name: str
+    name: Optional[str] = None
     ordered: bool = Field(default=False)
     slides: List[SlideLayoutModel]
-
-    def get_slide_layout_index(self, slide_layout_id: str) -> int:
-        for index, slide in enumerate(self.slides):
-            if slide.id == slide_layout_id:
-                return index
-        raise HTTPException(
-            status_code=404, detail=f"Slide layout {slide_layout_id} not found"
-        )
 
     def to_presentation_structure(self):
         return PresentationStructureModel(

@@ -1,8 +1,8 @@
-import { useCallback, useEffect } from "react";
+import { useCallback, useEffect } from 'react';
 import { useDispatch } from "react-redux";
 import { toast } from "sonner";
+import { DashboardApi } from "@/app/dashboard/api/dashboard";
 import { setPresentationData } from "@/store/slices/presentationGeneration";
-import { DashboardApi } from '../../services/api/dashboard';
 
 export const usePresentationData = (
   presentationId: string,
@@ -26,7 +26,11 @@ export const usePresentationData = (
     }
   }, [presentationId, dispatch, setLoading, setError]);
 
+  useEffect(() => {
+    fetchUserSlides();
+  }, [fetchUserSlides]);
+
   return {
     fetchUserSlides,
   };
-};
+}; 

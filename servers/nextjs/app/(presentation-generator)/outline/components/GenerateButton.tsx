@@ -1,10 +1,12 @@
 import React from "react";
 import { Button } from "@/components/ui/button";
+import { SlideOutline } from "@/store/slices/presentationGeneration";
 import { LoadingState, StreamState, LayoutGroup } from "../types/index";
 
 interface GenerateButtonProps {
     loadingState: LoadingState;
     streamState: StreamState;
+    outlines: SlideOutline[] | null;
     selectedLayoutGroup: LayoutGroup | null;
     onSubmit: () => void;
 }
@@ -12,6 +14,7 @@ interface GenerateButtonProps {
 const GenerateButton: React.FC<GenerateButtonProps> = ({
     loadingState,
     streamState,
+    outlines,
     selectedLayoutGroup,
     onSubmit
 }) => {

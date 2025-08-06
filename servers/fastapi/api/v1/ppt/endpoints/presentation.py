@@ -5,19 +5,21 @@ import random
 from typing import Annotated, List, Literal, Optional
 from fastapi import APIRouter, Body, Depends, File, HTTPException, UploadFile
 from fastapi.responses import StreamingResponse
-from sqlalchemy import delete
+from sqlalchemy import String, cast, delete, text
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlmodel import select
 from constants.documents import UPLOAD_ACCEPTED_FILE_TYPES
 from models.presentation_and_path import PresentationPathAndEditPath
 from models.presentation_from_template import GetPresentationUsingTemplateRequest
-from models.presentation_outline_model import PresentationOutlineModel
+from models.presentation_outline_model import (
+    PresentationOutlineModel,
+    SlideOutlineModel,
+)
 from models.pptx_models import PptxPresentationModel
 from models.presentation_layout import PresentationLayoutModel
 from models.presentation_structure_model import PresentationStructureModel
 from models.presentation_with_slides import PresentationWithSlides
-from services.score_based_chunker import ScoreBasedChunker
-from utils.get_layout_by_name import get_layout_by_name
+from services.get_layout_by_name import get_layout_by_name
 from services.icon_finder_service import IconFinderService
 from services.image_generation_service import ImageGenerationService
 from utils.dict_utils import deep_update
@@ -31,6 +33,7 @@ from services.documents_loader import DocumentsLoader
 from models.sql.presentation import PresentationModel
 from services.pptx_presentation_creator import PptxPresentationCreator
 from utils.asset_directory_utils import get_exports_directory, get_images_directory
+from utils.llm_calls.generate_document_summary import generate_document_summary
 from utils.llm_calls.generate_presentation_structure import (
     generate_presentation_structure,
 )
@@ -78,19 +81,23 @@ async def delete_presentation(
 @PRESENTATION_ROUTER.get("/all", response_model=List[PresentationWithSlides])
 async def get_all_presentations(sql_session: AsyncSession = Depends(get_async_session)):
     presentations_with_slides = []
-    presentations = await sql_session.scalars(select(PresentationModel))
+    presentations = await sql_session.scalars(
+        select(PresentationModel).where(
+            cast(PresentationModel.layout, String) != "null"
+        )
+    )
 
     async def inner(presentation: PresentationModel, sql_session: AsyncSession):
-        first_slide = await sql_session.scalar(
+        slides = await sql_session.scalars(
             select(SlideModel)
             .where(SlideModel.presentation == presentation.id)
             .where(SlideModel.index == 0)
         )
-        if not first_slide:
+        if not slides:
             return None
         return PresentationWithSlides(
             **presentation.model_dump(),
-            slides=[first_slide],
+            slides=slides,
         )
 
     tasks = [inner(p, sql_session) for p in presentations]
@@ -109,12 +116,20 @@ async def create_presentation(
 ):
     presentation_id = get_random_uuid()
 
+    summary = None
+    if file_paths:
+        temp_dir = TEMP_FILE_SERVICE.create_temp_dir(presentation_id)
+        documents_loader = DocumentsLoader(file_paths=file_paths)
+        await documents_loader.load_documents(temp_dir)
+
+        summary = await generate_document_summary(documents_loader.documents)
+
     presentation = PresentationModel(
         id=presentation_id,
         prompt=prompt,
         n_slides=n_slides,
         language=language,
-        file_paths=file_paths,
+        summary=summary,
     )
 
     sql_session.add(presentation)
@@ -126,7 +141,7 @@ async def create_presentation(
 @PRESENTATION_ROUTER.post("/prepare", response_model=PresentationModel)
 async def prepare_presentation(
     presentation_id: Annotated[str, Body()],
-    outlines: Annotated[List[str], Body()],
+    outlines: Annotated[List[SlideOutlineModel], Body()],
     layout: Annotated[PresentationLayoutModel, Body()],
     title: Annotated[Optional[str], Body()] = None,
     sql_session: AsyncSession = Depends(get_async_session),
@@ -161,7 +176,7 @@ async def prepare_presentation(
             presentation_structure.slides[index] = random_slide_index
 
     sql_session.add(presentation)
-    presentation.outlines = PresentationOutlineModel(slides=outlines).model_dump()
+    presentation.outlines = [each.model_dump() for each in outlines]
     presentation.title = title or presentation.title
     presentation.set_layout(layout)
     presentation.set_structure(presentation_structure)
@@ -206,11 +221,9 @@ async def stream_presentation(
         ).to_string()
         for i, slide_layout_index in enumerate(structure.slides):
             slide_layout = layout.slides[slide_layout_index]
-
             slide_content = await get_slide_content_from_type_and_outline(
-                slide_layout, outline.slides[i], presentation.language
+                slide_layout, outline.slides[i]
             )
-
             slide = SlideModel(
                 presentation=presentation_id,
                 layout_group=layout.name,
@@ -226,6 +239,9 @@ async def stream_presentation(
                     image_generation_service, icon_finder_service, slide
                 )
             )
+
+            # Give control to the event loop
+            await asyncio.sleep(0)
 
             yield SSEResponse(
                 event="response",
@@ -316,55 +332,37 @@ async def generate_presentation_api(
 
     presentation_id = get_random_uuid()
 
-    temp_dir = TEMP_FILE_SERVICE.create_temp_dir()
-
     # 1. Save uploaded files
     file_paths = []
     if files:
+        temp_dir = TEMP_FILE_SERVICE.create_temp_dir()
         for upload in files:
             file_path = os.path.join(temp_dir, upload.filename)
             with open(file_path, "wb") as f:
                 f.write(await upload.read())
             file_paths.append(file_path)
 
-    # 3. Generate Outlines
-    presentation_outlines = None
-    additional_context = ""
+    # 2. Create Presentation Summary (if documents are provided)
+    summary = None
     if file_paths:
+        temp_dir = TEMP_FILE_SERVICE.create_temp_dir(presentation_id)
         documents_loader = DocumentsLoader(file_paths=file_paths)
         await documents_loader.load_documents(temp_dir)
-        documents = documents_loader.documents
-        if documents:
-            additional_context = documents[0]
-            chunker = ScoreBasedChunker()
-            try:
-                chunks = await chunker.get_n_chunks(documents[0], n_slides)
-                presentation_outlines = PresentationOutlineModel(
-                    slides=[chunk.to_slide_outline() for chunk in chunks]
-                )
-            except Exception as e:
-                print(e)
+        summary = await generate_document_summary(documents_loader.documents)
 
-    if not presentation_outlines:
-        presentation_outlines_text = ""
-        async for chunk in generate_ppt_outline(
-            prompt,
-            n_slides,
-            language,
-            additional_context,
-        ):
-            presentation_outlines_text += chunk
+    # 3. Generate Outlines
+    presentation_content_text = ""
+    async for chunk in generate_ppt_outline(
+        prompt,
+        n_slides,
+        language,
+        summary,
+    ):
+        presentation_content_text += chunk
 
-    try:
-        presentation_outlines_json = json.loads(presentation_outlines_text)
-    except Exception as e:
-        print(e)
-        raise HTTPException(
-            status_code=400,
-            detail="Failed to generate presentation outlines. Please try again.",
-        )
-    presentation_outlines = PresentationOutlineModel(**presentation_outlines_json)
-    outlines = presentation_outlines.slides[:n_slides]
+    presentation_content_json = json.loads(presentation_content_text)
+    presentation_content = PresentationOutlineModel(**presentation_content_json)
+    outlines = presentation_content.slides[:n_slides]
     total_outlines = len(outlines)
 
     print("-" * 40)
@@ -380,8 +378,12 @@ async def generate_presentation_api(
     else:
         presentation_structure: PresentationStructureModel = (
             await generate_presentation_structure(
-                presentation_outlines,
-                layout_model,
+                presentation_outline=PresentationOutlineModel(
+                    title=presentation_content.title,
+                    slides=outlines,
+                    notes=presentation_content.notes,
+                ),
+                presentation_layout=layout_model,
             )
         )
 
@@ -400,7 +402,10 @@ async def generate_presentation_api(
         prompt=prompt,
         n_slides=n_slides,
         language=language,
-        outlines=presentation_outlines.model_dump(),
+        title=presentation_content.title,
+        summary=summary,
+        outlines=[each.model_dump() for each in outlines],
+        notes=presentation_content.notes,
         layout=layout_model.model_dump(),
         structure=presentation_structure.model_dump(),
     )
@@ -416,7 +421,7 @@ async def generate_presentation_api(
         slide_layout = layout_model.slides[slide_layout_index]
         print(f"Generating content for slide {i} with layout {slide_layout.id}")
         slide_content = await get_slide_content_from_type_and_outline(
-            slide_layout, outlines[i], language
+            slide_layout, outlines[i]
         )
         slide = SlideModel(
             presentation=presentation_id,
@@ -446,7 +451,7 @@ async def generate_presentation_api(
 
     # 9. Export
     presentation_and_path = await export_presentation(
-        presentation_id, presentation.title or get_random_uuid(), export_as
+        presentation_id, presentation_content.title, export_as
     )
 
     return PresentationPathAndEditPath(
@@ -474,6 +479,7 @@ async def from_template(
         new_slide_data = list(filter(lambda x: x.index == each_slide.index, data.data))
         if new_slide_data:
             updated_content = deep_update(each_slide.content, new_slide_data[0].content)
+            print(f"Updated content for slide {each_slide.index}: {updated_content}")
         new_slides.append(
             each_slide.get_new_slide(new_presentation.id, updated_content)
         )
@@ -483,7 +489,7 @@ async def from_template(
     await sql_session.commit()
 
     presentation_and_path = await export_presentation(
-        new_presentation.id, new_presentation.title or get_random_uuid(), data.export_as
+        new_presentation.id, new_presentation.title, data.export_as
     )
 
     return PresentationPathAndEditPath(

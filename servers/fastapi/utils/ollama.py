@@ -1,7 +1,7 @@
+from http.client import HTTPException
 import json
 from typing import AsyncGenerator
 import aiohttp
-from fastapi import HTTPException
 
 from models.ollama_model_status import OllamaModelStatus
 from utils.get_env import get_ollama_url_env

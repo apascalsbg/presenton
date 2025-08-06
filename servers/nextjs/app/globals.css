@@ -41,7 +41,6 @@ body {
     --chart-5: 27 87% 67%;
     --radius: 0.5rem;
   }
-
   .dark {
     --background: 240 10% 3.9%;
     --foreground: 0 0% 98%;
@@ -71,14 +70,13 @@ body {
 }
 
 @layer base {
-
+  
   body {
     @apply bg-background text-foreground;
   }
 }
-
-strong {
-  @apply font-black;
+strong{
+  @apply font-black ;
 }
 
 
@@ -99,17 +97,13 @@ input[type="number"] {
   -moz-appearance: textfield;
 }
 
-thead,
-tbody tr {
-  display: table;
-  width: 100%;
-  table-layout: fixed;
-  /* even columns width , fix width of table too*/
+thead, tbody tr {
+    display: table;
+    width: 100%;
+    table-layout: fixed;/* even columns width , fix width of table too*/
 }
-
 thead {
-  width: calc(100% - 1em)
-    /* scrollbar is average 1em/16px width, remove it from thead width */
+    width: calc( 100% - 1em )/* scrollbar is average 1em/16px width, remove it from thead width */
 }
 
 /* Add this to your global CSS or a specific CSS module */
@@ -117,54 +111,37 @@ thead {
   from {
     width: 0;
   }
-
   to {
     width: 100%;
   }
 }
 
 .typing-effect {
-  overflow: hidden;
-  /* Ensures the text is hidden until revealed */
-  white-space: nowrap;
-  /* Prevents text from wrapping */
-  display: inline-block;
-  /* Ensures the width is respected */
-  animation: typing 2s steps(10, end);
-  /* Adjust duration and steps for effect */
-  animation-fill-mode: forwards;
-  /* Retain the final state of the animation */
-  animation-delay: 1s;
-  /* Optional: delay before starting the animation */
+  overflow: hidden; /* Ensures the text is hidden until revealed */
+  white-space: nowrap; /* Prevents text from wrapping */
+  display: inline-block; /* Ensures the width is respected */
+  animation: typing 2s steps(10, end); /* Adjust duration and steps for effect */
+  animation-fill-mode: forwards; /* Retain the final state of the animation */
+  animation-delay: 1s; /* Optional: delay before starting the animation */
 }
 
 .typing-effect-complete {
-  border-right: none;
-  /* Remove the cursor after animation */
+  border-right: none; /* Remove the cursor after animation */
 }
-
 .blinking-cursor {
-  animation: blink 1s step-end infinite;
+    animation: blink 1s step-end infinite;
 }
 
 @keyframes blink {
-
-  from,
-  to {
-    opacity: 1;
-  }
-
-  50% {
-    opacity: 0;
-  }
+    from, to { opacity: 1; }
+    50% { opacity: 0; }
 }
 
 .hide-scrollbar::-webkit-scrollbar {
   @apply hidden;
 }
-
 .hide-scrollbar {
-  -ms-overflow-style: none;
+    -ms-overflow-style: none;
   scrollbar-width: none;
 }
 
@@ -203,39 +180,36 @@ thead {
 /* word animation */
 
 @keyframes slideUp {
-  0% {
-    transform: translateY(0);
-  }
-
-  100% {
-    transform: translateY(-50%);
-  }
+    0% {
+        transform: translateY(0);
+    }
+    100% {
+        transform: translateY(-50%);
+    }
 }
 
 @keyframes slideDown {
-  0% {
-    transform: translateY(-50%);
-  }
-
-  100% {
-    transform: translateY(0);
-  }
+    0% {
+        transform: translateY(-50%);
+    }
+    100% {
+        transform: translateY(0);
+    }
 }
 
 .animate-slideUp {
-  animation: slideUp 20s linear infinite;
+    animation: slideUp 20s linear infinite;
 }
 
 .animate-slideDown {
-  animation: slideDown 20s linear infinite;
+    animation: slideDown 20s linear infinite;
 }
 
 /* Add hover pause */
 .animate-slideUp:hover,
 .animate-slideDown:hover {
-  animation-play-state: paused;
+    animation-play-state: paused;
 }
-
 /*  box animation */
 
 .research-mode-bg {
@@ -263,20 +237,18 @@ thead {
     height: 0;
     opacity: 0.8;
   }
-
   100% {
     width: 200%;
     height: 200%;
     opacity: 1;
   }
 }
-
 /* Markdown Styles */
 .markdown-content {
   @apply prose prose-slate max-w-none;
 }
 
-/* .markdown-content h1 {
+.markdown-content h1 {
   @apply text-xl font-bold mb-4 text-gray-900;
 }
 
@@ -351,7 +323,7 @@ thead {
 
 .markdown-content td {
   @apply border border-gray-300 px-4 py-2;
-} */
+}
 
 /* Override Tailwind Typography prose heading sizes for markdown editor */
 .prose h1 {
@@ -411,7 +383,7 @@ thead {
 
 .mdxeditor-button[data-active=true] {
   @apply bg-gray-100;
-}
+} 
 
 /* tippy-box  */
 .tippy-box {
@@ -425,3 +397,7 @@ thead {
   height: 0;
   pointer-events: none;
 }
+
+
+
+

@@ -9,9 +9,9 @@ import { handleSaveLLMConfig } from "@/utils/storeHelpers";
 import LLMProviderSelection from "./LLMSelection";
 import {
   checkIfSelectedOllamaModelIsPulled,
+  LLMConfig,
   pullOllamaModel,
 } from "@/utils/providerUtils";
-import { LLMConfig } from "@/types/llm_config";
 
 // Button state interface
 interface ButtonState {
@@ -27,6 +27,7 @@ export default function Home() {
   const router = useRouter();
   const config = useSelector((state: RootState) => state.userConfig);
   const [llmConfig, setLlmConfig] = useState<LLMConfig>(config.llm_config);
+  const [isLoading, setIsLoading] = useState<boolean>(false);
 
   const [downloadingModel, setDownloadingModel] = useState<{
     name: string;
@@ -53,6 +54,7 @@ export default function Home() {
 
   const handleSaveConfig = async () => {
     try {
+      setIsLoading(true);
       setButtonState(prev => ({
         ...prev,
         isLoading: true,
@@ -68,6 +70,7 @@ export default function Home() {
         }
       }
       toast.info("Configuration saved successfully");
+      setIsLoading(false);
       setButtonState(prev => ({
         ...prev,
         isLoading: false,
@@ -76,7 +79,8 @@ export default function Home() {
       }));
       router.push("/upload");
     } catch (error) {
-      toast.info(error instanceof Error ? error.message : "Failed to save configuration");
+      toast.info("Failed to save configuration");
+      setIsLoading(false);
       setButtonState(prev => ({
         ...prev,
         isLoading: false,
@@ -89,8 +93,8 @@ export default function Home() {
   const handleModelDownload = async () => {
     try {
       await pullOllamaModel(llmConfig.OLLAMA_MODEL!, setDownloadingModel);
-    }
-    finally {
+    } catch (error) {
+      console.info("Error downloading model:", error);
       setDownloadingModel(null);
       setShowDownloadModal(false);
     }

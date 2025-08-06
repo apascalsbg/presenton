@@ -14,20 +14,20 @@ import {
   usePresentationStreaming,
   usePresentationData,
   usePresentationNavigation,
-  useAutoSave,
+  useAutoSave
 } from "../hooks";
 import { PresentationPageProps } from "../types";
 import LoadingState from "./LoadingState";
 
-const PresentationPage: React.FC<PresentationPageProps> = ({
-  presentation_id,
-}) => {
+const PresentationPage: React.FC<PresentationPageProps> = ({ presentation_id }) => {
+
   // State management
   const [loading, setLoading] = useState(true);
   const [selectedSlide, setSelectedSlide] = useState(0);
   const [isFullscreen, setIsFullscreen] = useState(false);
   const [error, setError] = useState(false);
   const [isMobilePanelOpen, setIsMobilePanelOpen] = useState(false);
+
 
   const { presentationData, isStreaming } = useSelector(
     (state: RootState) => state.presentationGeneration
@@ -37,6 +37,7 @@ const PresentationPage: React.FC<PresentationPageProps> = ({
   const { isSaving } = useAutoSave({
     debounceMs: 2000,
     enabled: !!presentationData && !isStreaming,
+
   });
 
   // Custom hooks
@@ -53,12 +54,7 @@ const PresentationPage: React.FC<PresentationPageProps> = ({
     toggleFullscreen,
     handlePresentExit,
     handleSlideChange,
-  } = usePresentationNavigation(
-    presentation_id,
-    selectedSlide,
-    setSelectedSlide,
-    setIsFullscreen
-  );
+  } = usePresentationNavigation(presentation_id, selectedSlide, setSelectedSlide, setIsFullscreen);
 
   // Initialize streaming
   usePresentationStreaming(
@@ -69,9 +65,12 @@ const PresentationPage: React.FC<PresentationPageProps> = ({
     fetchUserSlides
   );
 
+
   const onSlideChange = (newSlide: number) => {
     handleSlideChange(newSlide, presentationData);
   };
+
+
 
   // Presentation Mode View
   if (isPresentMode) {
@@ -95,11 +94,15 @@ const PresentationPage: React.FC<PresentationPageProps> = ({
           role="alert"
         >
           <AlertCircle className="w-16 h-16 mb-4 text-red-500" />
-          <h2 className="text-xl font-semibold mb-2">Something went wrong</h2>
+          <h2 className="text-xl font-semibold mb-2">
+            Something went wrong
+          </h2>
           <p className="text-center mb-4">
             We couldn't load your presentation. Please try again.
           </p>
-          <Button onClick={() => window.location.reload()}>Refresh Page</Button>
+          <Button onClick={() => window.location.reload()}>
+            Refresh Page
+          </Button>
         </div>
       </div>
     );
@@ -107,8 +110,12 @@ const PresentationPage: React.FC<PresentationPageProps> = ({
 
   return (
     <div className="h-screen flex overflow-hidden flex-col">
+
       <div className="fixed right-6 top-[5.2rem] z-50">
-        {isSaving && <Loader2 className="w-6 h-6 animate-spin text-blue-500" />}
+        {isSaving && (
+          <Loader2 className="w-6 h-6 animate-spin text-blue-500" />
+        )}
+
       </div>
 
       <Header presentation_id={presentation_id} currentSlide={selectedSlide} />
@@ -116,7 +123,7 @@ const PresentationPage: React.FC<PresentationPageProps> = ({
 
       <div
         style={{
-          background: "#c8c7c9",
+          background: '#c8c7c9',
         }}
         className="flex flex-1 relative pt-6"
       >
@@ -129,14 +136,11 @@ const PresentationPage: React.FC<PresentationPageProps> = ({
         />
 
         <div className="flex-1 h-[calc(100vh-100px)] overflow-y-auto">
-          <div
-            id="presentation-slides-wrapper"
-            className="mx-auto flex flex-col items-center overflow-hidden justify-center p-2 sm:p-6 pt-0"
-          >
+          <div id="presentation-slides-wrapper" className="mx-auto flex flex-col items-center overflow-hidden justify-center p-2 sm:p-6 pt-0">
             {!presentationData ||
-            loading ||
-            !presentationData?.slides ||
-            presentationData?.slides.length === 0 ? (
+              loading ||
+              !presentationData?.slides ||
+              presentationData?.slides.length === 0 ? (
               <div className="relative w-full h-[calc(100vh-120px)] mx-auto">
                 <div className="">
                   {Array.from({ length: 2 }).map((_, index) => (
@@ -159,6 +163,7 @@ const PresentationPage: React.FC<PresentationPageProps> = ({
                       slide={slide}
                       index={index}
                       presentationId={presentation_id}
+
                     />
                   ))}
               </>

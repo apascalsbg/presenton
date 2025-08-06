@@ -5,6 +5,8 @@ import "./globals.css";
 import { Providers } from "./providers";
 import { LayoutProvider } from "./(presentation-generator)/context/LayoutContext";
 import { Toaster } from "@/components/ui/sonner";
+
+
 const inter = localFont({
   src: [
     {

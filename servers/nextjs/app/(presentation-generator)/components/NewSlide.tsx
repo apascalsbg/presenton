@@ -3,7 +3,7 @@ import React from 'react'
 import { useDispatch } from 'react-redux';
 import { addNewSlide } from '@/store/slices/presentationGeneration';
 import { Loader2 } from 'lucide-react';
-import { useGroupLayoutLoader } from '@/app/(presentation-generator)/layout-preview/hooks/useGroupLayoutLoader';
+import { useGroupLayoutLoader } from '@/app/layout-preview/hooks/useGroupLayoutLoader';
 import { v4 as uuidv4 } from 'uuid';
 import { toast } from 'sonner';
 interface NewSlideProps {

@@ -1,4 +1,3 @@
-import { LLMConfig } from "@/types/llm_config";
 import { createSlice, PayloadAction } from "@reduxjs/toolkit";
 
 interface UserConfigState {

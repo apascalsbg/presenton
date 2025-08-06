@@ -131,7 +131,6 @@ const UploadPage = () => {
       config,
       files: responses,
     }));
-    dispatch(clearOutlines());
     router.push("/documents-preview");
   };
 

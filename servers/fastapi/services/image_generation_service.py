@@ -3,12 +3,12 @@ import os
 import aiohttp
 from google import genai
 from google.genai.types import GenerateContentConfig
-from openai import AsyncOpenAI
 from models.image_prompt import ImagePrompt
 from models.sql.image_asset import ImageAsset
 from utils.download_helpers import download_file
 from utils.get_env import get_pexels_api_key_env
 from utils.get_env import get_pixabay_api_key_env
+from utils.llm_provider import get_llm_client
 from utils.image_provider import (
     is_pixels_selected,
     is_pixabay_selected,
@@ -80,7 +80,7 @@ class ImageGenerationService:
             return "/static/images/placeholder.jpg"
 
     async def generate_image_openai(self, prompt: str, output_directory: str) -> str:
-        client = AsyncOpenAI()
+        client = get_llm_client()
         result = await client.images.generate(
             model="dall-e-3",
             prompt=prompt,
